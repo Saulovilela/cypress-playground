@@ -1,7 +1,4 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: E2E Tests
+name: Cypress Regression Tests
 
 on:
   push:
@@ -10,20 +7,40 @@ on:
     branches: [ "main" ]
 
 jobs:
-  tests:
+  cypress-run:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Get code
-      uses: actions/checkout@v4
+      # 1️⃣ Clona o repositório
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Use Node.js 20
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'npm'
+      # 2️⃣ Instala Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      # 3️⃣ Instala dependências do Cypress (sem exigir lockfile)
+      - name: Install dependencies
+        run: |
+          npm install --legacy-peer-deps
+
+      # 4️⃣ Verifica versão do Cypress (opcional, mas útil para debug)
+      - name: Verify Cypress installation
+        run: npx cypress verify
+
+      # 5️⃣ Executa os testes em modo headless
+      - name: Run Cypress tests
+        run: npx cypress run --browser chrome
+
+      # 6️⃣ (Opcional) Faz upload dos vídeos e screenshots como artefato
+      - name: Upload Cypress artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            cypress/videos
+            cypress/screenshots
 
