@@ -1,0 +1,57 @@
+name: Cypress Regression Tests with Allure
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Clona o repositório
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Instala Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 3️⃣ Instala todas as dependências
+      - name: Install dependencies
+        run: |
+          npm install --legacy-peer-deps
+          npm install -g allure-commandline --save-dev
+
+      # 4️⃣ Verifica instalação do Cypress (opcional)
+      - name: Verify Cypress installation
+        run: npx cypress verify
+
+      # 5️⃣ Executa testes com o Allure ativado
+      - name: Run Cypress tests with Allure
+        run: |
+          npx cypress run --env allure=true
+
+      # 6️⃣ Gera o relatório Allure
+      - name: Generate Allure Report
+        run: |
+          allure generate allure-results --clean -o allure-report
+
+      # 7️⃣ Publica o relatório como artefato
+      - name: Upload Allure Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report
+
+      # 8️⃣ (Opcional) Publica o relatório no GitHub Pages
+      - name: Deploy Allure Report to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: allure-report
